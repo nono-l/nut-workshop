@@ -1,0 +1,44 @@
+# ステージ 19 — 要塞
+# holes は [列, 行]。z が大きいほど手前。
+# color は oak / green / honey / cedar / sage。
+# open は最初からネジがない穴（省略可）。
+id = 19
+title = "要塞"
+cols = 5
+rows = 6
+time = 50
+
+[[planks]]
+color = "oak"
+z = 2
+holes = [[0, 1], [1, 1], [2, 1], [3, 1], [4, 1]]
+
+[[planks]]
+color = "oak"
+z = 2
+holes = [[0, 4], [1, 4], [2, 4], [3, 4], [4, 4]]
+
+[[planks]]
+color = "green"
+z = 1
+holes = [[0, 1], [0, 2], [0, 3], [0, 4]]
+
+[[planks]]
+color = "green"
+z = 1
+holes = [[4, 1], [4, 2], [4, 3], [4, 4]]
+
+[[planks]]
+color = "honey"
+z = 3
+holes = [[1, 2], [2, 2], [3, 2]]
+
+[[planks]]
+color = "cedar"
+z = 3
+holes = [[1, 3], [2, 3], [3, 3]]
+
+[[planks]]
+color = "sage"
+z = 4
+holes = [[2, 2], [2, 3]]

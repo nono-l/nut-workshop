@@ -1,0 +1,44 @@
+# ステージ 18 — 短い板ばかり
+# holes は [列, 行]。z が大きいほど手前。
+# color は oak / green / honey / cedar / sage。
+# open は最初からネジがない穴（省略可）。
+id = 18
+title = "短い板ばかり"
+cols = 5
+rows = 6
+time = 55
+
+[[planks]]
+color = "oak"
+z = 2
+holes = [[0, 1], [1, 1]]
+
+[[planks]]
+color = "oak"
+z = 2
+holes = [[3, 1], [4, 1]]
+
+[[planks]]
+color = "green"
+z = 2
+holes = [[0, 3], [1, 3]]
+
+[[planks]]
+color = "green"
+z = 2
+holes = [[3, 3], [4, 3]]
+
+[[planks]]
+color = "honey"
+z = 3
+holes = [[2, 0], [2, 1], [2, 2]]
+
+[[planks]]
+color = "cedar"
+z = 3
+holes = [[2, 3], [2, 4], [2, 5]]
+
+[[planks]]
+color = "sage"
+z = 1
+holes = [[0, 2], [1, 2], [2, 2], [3, 2], [4, 2]]

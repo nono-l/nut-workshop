@@ -1,4 +1,4 @@
-import { readdirSync } from "node:fs";
+import { readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Plugin } from "vite";
 import { defineConfig } from "vite";
@@ -11,6 +11,63 @@ import { grokPwaPlugin } from "./scripts/grok-pwa-plugin.mjs";
 // @ts-expect-error JS plugin alongside the TS vite config
 import { appEnvPlugin } from "./scripts/app-env-plugin.mjs";
 import { isMigrationFile } from "./scripts/migration-plan.mjs";
+
+function stageWriterPlugin(): Plugin {
+  return {
+    name: "nut-stage-writer",
+    apply: "serve",
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const pathOnly = (req.url ?? "").split("?", 1)[0] ?? "";
+        if (pathOnly !== "/__stage") {
+          next();
+          return;
+        }
+        if ((req.method ?? "GET").toUpperCase() !== "POST") {
+          res.statusCode = 405;
+          res.setHeader("content-type", "text/plain; charset=utf-8");
+          res.end("Method Not Allowed");
+          return;
+        }
+        const chunks: Buffer[] = [];
+        req.on("data", (chunk: Buffer) => {
+          chunks.push(chunk);
+          if (chunks.reduce((sum, part) => sum + part.length, 0) > 100_000) {
+            res.statusCode = 413;
+            res.end("too large");
+            req.destroy();
+          }
+        });
+        req.on("end", () => {
+          if (res.writableEnded) return;
+          try {
+            const body = JSON.parse(Buffer.concat(chunks).toString("utf8")) as {
+              id?: unknown;
+              toml?: unknown;
+            };
+            const id = body.id;
+            const toml = body.toml;
+            if (typeof id !== "number" || !Number.isInteger(id) || id < 1 || id > 99) {
+              throw new Error("bad id");
+            }
+            if (typeof toml !== "string" || !toml.includes(`id = ${id}`) || toml.length > 100_000) {
+              throw new Error("bad toml");
+            }
+            const name = `${String(id).padStart(2, "0")}.toml`;
+            writeFileSync(join(server.config.root, "stages", name), toml.endsWith("\n") ? toml : `${toml}\n`);
+            res.statusCode = 200;
+            res.setHeader("content-type", "application/json");
+            res.end(JSON.stringify({ ok: true, file: name }));
+          } catch (err) {
+            res.statusCode = 400;
+            res.setHeader("content-type", "text/plain; charset=utf-8");
+            res.end(err instanceof Error ? err.message : "bad");
+          }
+        });
+      });
+    },
+  };
+}
 
 /** The files `src/lib/db.ts` globs — same directory, same non-recursive scope. */
 function hasGlobbedMigrations(root: string): boolean {
@@ -158,6 +215,7 @@ export default defineConfig(({ command, isPreview }) => ({
   },
   resolve: { tsconfigPaths: true },
   plugins: [
+    stageWriterPlugin(),
     pgliteBootstrapPlugin(),
     // Before tanstackStart so /auth/popup never falls through to the SPA.
     authPopupPlugin(),

@@ -14,6 +14,10 @@
   --color-coin: #e8c35a;
   --color-ink: #3a2a1c;
   --radius-wood: 1.1rem;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-quick: 150ms;
+  --motion-fast: 250ms;
+  --motion-slow: 400ms;
 }
 
 @layer base {
@@ -62,7 +66,7 @@
     box-shadow 150ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .wood-btn:active {
-  transform: translateY(4px);
+  transform: translateY(4px) scale(0.96);
   box-shadow:
     0 1px 0 #6a4a24,
     0 2px 6px rgba(0, 0, 0, 0.25);
@@ -208,5 +212,139 @@
   to {
     transform: scale(1);
     opacity: 1;
+  }
+}
+
+.screen-in {
+  animation: screen-in var(--motion-fast) var(--ease-out) both;
+}
+@keyframes screen-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hint-in {
+  animation: hint-in var(--motion-fast) var(--ease-out) both;
+}
+@keyframes hint-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.toast-in {
+  animation: toast-in var(--motion-fast) var(--ease-out) both;
+}
+.toast-out {
+  animation: toast-out var(--motion-quick) ease-in both;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+@keyframes toast-out {
+  from {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+}
+
+.timer-warn {
+  color: #f3c4a8;
+  animation: timer-warn 0.8s ease-in-out infinite;
+}
+@keyframes timer-warn {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.bar-fill {
+  transition: width var(--motion-slow) var(--ease-out);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 20px 24px;
+  text-align: center;
+}
+
+.stagger-in > * {
+  animation: hint-in var(--motion-slow) var(--ease-out) both;
+}
+.stagger-in > *:nth-child(1) {
+  animation-delay: 40ms;
+}
+.stagger-in > *:nth-child(2) {
+  animation-delay: 90ms;
+}
+.stagger-in > *:nth-child(3) {
+  animation-delay: 140ms;
+}
+.stagger-in > *:nth-child(4) {
+  animation-delay: 190ms;
+}
+
+.boot-pulse {
+  animation: boot-pulse 1.4s ease-in-out infinite;
+}
+@keyframes boot-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.board-skeleton {
+  position: absolute;
+  inset: 12%;
+  border-radius: 22px;
+  background: linear-gradient(#cdb27a, #a07c42);
+  box-shadow: inset 0 0 0 6px rgba(90, 55, 20, 0.12);
+  animation: boot-pulse 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-in,
+  .hint-in,
+  .toast-in,
+  .toast-out,
+  .star-pop,
+  .modal-in,
+  .crate,
+  .timer-warn,
+  .boot-pulse,
+  .board-skeleton,
+  .stagger-in > * {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+  .bar-fill {
+    transition: none;
   }
 }

@@ -23,7 +23,6 @@ export function HomeScreen() {
   const nuts = useGameStore((s) => s.nuts);
   const maxUnlocked = useGameStore((s) => s.maxUnlocked);
   const dailyDone = useGameStore((s) => s.dailyDone);
-  const dailyClaimed = useGameStore((s) => s.dailyClaimed);
   const stars = useGameStore((s) => s.stars);
   const playLevel = useGameStore((s) => s.playLevel);
   const setScreen = useGameStore((s) => s.setScreen);
@@ -33,7 +32,7 @@ export function HomeScreen() {
   const done = Object.keys(stars).length;
 
   return (
-    <div className="workshop-bg flex h-full flex-col text-[var(--color-cream)]">
+    <div className="workshop-bg screen-in flex h-full flex-col text-[var(--color-cream)]">
       <header className="flex items-center justify-between px-3 pt-[max(12px,env(safe-area-inset-top))] pb-2">
         <div className="flex items-center gap-2">
           <div className="grid size-11 place-items-center rounded-2xl bg-[rgba(201,166,107,0.25)]">
@@ -50,7 +49,7 @@ export function HomeScreen() {
         </div>
         <button
           type="button"
-          className="grid size-11 place-items-center rounded-2xl bg-[rgba(244,230,196,0.14)]"
+          className="grid size-11 place-items-center rounded-2xl bg-[rgba(244,230,196,0.14)] transition-transform duration-150 ease-out active:scale-[0.96]"
           onClick={() => {
             sfxUi();
             setSettingsOpen(true);
@@ -70,7 +69,7 @@ export function HomeScreen() {
         <span className="text-xs font-bold tracking-wide">{t(lang, "daily")}</span>
         <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-[rgba(0,0,0,0.28)]">
           <div
-            className="h-full rounded-full bg-[linear-gradient(90deg,#7DA15C,#E8C35A,#C47A5A)]"
+            className="bar-fill h-full rounded-full bg-[linear-gradient(90deg,#7DA15C,#E8C35A,#C47A5A)]"
             style={{ width: `${(dailyDone / 2) * 100}%` }}
           />
         </div>
@@ -128,7 +127,6 @@ export function HomeScreen() {
         <NavBtn icon={<Home className="size-6" />} label={t(lang, "home")} active />
         <NavBtn icon={<Shirt className="size-6" />} label={t(lang, "closet")} onClick={() => setScreen("closet")} />
       </nav>
-      {dailyClaimed ? null : null}
     </div>
   );
 }

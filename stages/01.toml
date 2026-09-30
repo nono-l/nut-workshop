@@ -1,0 +1,14 @@
+# ステージ 01 — 一本の板
+# holes は [列, 行]。z が大きいほど手前。
+# color は oak / green / honey / cedar / sage。
+# open は最初からネジがない穴（省略可）。
+id = 1
+title = "一本の板"
+cols = 4
+rows = 4
+time = 90
+
+[[planks]]
+color = "oak"
+z = 1
+holes = [[1, 1], [2, 1]]

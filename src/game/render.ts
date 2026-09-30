@@ -81,6 +81,7 @@ export function drawWorld(
   ctx: CanvasRenderingContext2D,
   world: World,
   skins: { board: BoardSkin; screw: ScrewSkin },
+  debug?: { fps: number } | null,
 ) {
   const { cssW, cssH } = world;
   ctx.clearRect(0, 0, cssW, cssH);
@@ -101,6 +102,15 @@ export function drawWorld(
 
   for (const s of world.screws.values()) {
     if (s.alive) drawScrew(ctx, world, s, skins.screw);
+  }
+
+  if (world.editing && world.selection?.kind === "hole") {
+    const p = world.holePos(world.selection.c, world.selection.r);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, world.cell * 0.32, 0, Math.PI * 2);
+    ctx.strokeStyle = "#8EC8FF";
+    ctx.lineWidth = 3;
+    ctx.stroke();
   }
 
   for (const q of world.particles) {
@@ -133,6 +143,62 @@ export function drawWorld(
   }
 
   ctx.restore();
+  if (debug) drawDebug(ctx, world, debug.fps);
+}
+
+function drawDebug(ctx: CanvasRenderingContext2D, world: World, fps: number) {
+  ctx.save();
+  ctx.font = "bold 11px ui-sans-serif, system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  for (const h of world.holeKeys()) {
+    const p = world.holePos(h.c, h.r);
+    const covered = world.isHoleCovered(h.c, h.r);
+    ctx.fillStyle = covered ? "rgba(180,40,30,0.35)" : "rgba(20,40,80,0.22)";
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, world.cell * 0.18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(20,16,10,0.7)";
+    ctx.strokeText(`${h.c},${h.r}`, p.x, p.y);
+    ctx.fillStyle = covered ? "#F4C4B0" : "#F4E6C4";
+    ctx.fillText(`${h.c},${h.r}`, p.x, p.y);
+  }
+  for (const p of world.planks) {
+    if (p.removed) continue;
+    const label = `#${p.id} a${p.anchors.length}${p.fly > 0 ? " fly" : ""}`;
+    ctx.strokeStyle = "rgba(20,16,10,0.75)";
+    ctx.lineWidth = 3;
+    ctx.strokeText(label, p.x, p.y - 10);
+    ctx.fillStyle = "#8EE0A8";
+    ctx.fillText(label, p.x, p.y - 10);
+  }
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  const held = world.held?.key ?? "-";
+  const place = world.placing ? `${world.placing.toC},${world.placing.toR}` : "-";
+  const lines = [
+    `${fps.toFixed(0)}fps  held ${held}  → ${place}`,
+    `tool ${world.tool}  freeze ${world.freezeClock ? "on" : "off"}  grav ${world.gravityOff ? "off" : "on"}  t ${world.timeLeft.toFixed(1)}  rew ${world.rewindSpan().toFixed(1)}`,
+    `edit ${world.editing ? "on" : "off"}  sel ${editLabel(world.selection)}  add ${world.addArmed ? "on" : "off"}  drill ${world.drillArmed ? "on" : "off"}`,
+  ];
+  ctx.font = "bold 12px ui-sans-serif, system-ui, sans-serif";
+  let y = 6;
+  for (const line of lines) {
+    ctx.fillStyle = "rgba(20,16,10,0.62)";
+    ctx.fillRect(6, y - 1, ctx.measureText(line).width + 10, 16);
+    ctx.fillStyle = "#F4E6C4";
+    ctx.fillText(line, 10, y);
+    y += 16;
+  }
+  ctx.restore();
+}
+
+function editLabel(sel: World["selection"]) {
+  if (!sel) return "-";
+  if (sel.kind === "plank") return `板#${sel.id}`;
+  if (sel.kind === "plank-hole") return `板穴#${sel.id}:${sel.index}`;
+  return `穴${sel.c},${sel.r}`;
 }
 
 function drawBoard(ctx: CanvasRenderingContext2D, world: World, skin: BoardSkin) {
@@ -175,6 +241,18 @@ function drawHoles(ctx: CanvasRenderingContext2D, world: World) {
     ctx.fillStyle = "#A89068";
     ctx.fill();
   }
+  if (!world.editing || !world.level.blank) return;
+  ctx.save();
+  ctx.setLineDash([3, 3]);
+  ctx.strokeStyle = "rgba(244,230,196,0.28)";
+  ctx.lineWidth = 1.5;
+  for (const [c, row] of world.level.blank) {
+    const p = world.holePos(c, row);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, world.cell * 0.16, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function drawDropTargets(ctx: CanvasRenderingContext2D, world: World) {
@@ -243,6 +321,24 @@ function drawPlank(ctx: CanvasRenderingContext2D, world: World, p: World["planks
     ctx.stroke();
   }
 
+  if (world.editing && world.selection?.kind === "plank" && world.selection.id === p.id) {
+    ctx.strokeStyle = "#E8C35A";
+    ctx.lineWidth = 3.5;
+    roundRect(ctx, -p.length / 2 - 4, -p.thick / 2 - 4, p.length + 8, p.thick + 8, p.thick / 2 + 4);
+    ctx.stroke();
+  }
+
+  if (world.editing && world.selection?.kind === "plank-hole" && world.selection.id === p.id) {
+    const hole = p.holes[world.selection.index];
+    if (hole) {
+      ctx.beginPath();
+      ctx.arc(hole.lx, hole.ly, holeR + 5, 0, Math.PI * 2);
+      ctx.strokeStyle = "#E8C35A";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+  }
+
   ctx.restore();
 }
 
@@ -259,7 +355,8 @@ function drawScrew(
   const r = world.cell * 0.2;
   ctx.save();
   ctx.translate(s.x, s.y - t * 22);
-  ctx.rotate(held ? world.pulse * 5 + t * Math.PI : t * Math.PI * 3.2);
+  // canvas は +Y 下なので正回転は時計回り。外す（t 増）は反時計、締める（t 減）は時計。
+  ctx.rotate(held ? -(world.pulse * 5 + t * Math.PI) : -t * Math.PI * 3.2);
   const sc = 1 + t * 0.28;
   ctx.scale(sc, sc);
   ctx.globalAlpha = covered ? 0.38 : s.dying ? 1 - t : 1;

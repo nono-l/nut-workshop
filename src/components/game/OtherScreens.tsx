@@ -1,4 +1,5 @@
 import { ArrowLeft, Star, Lock, Check } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useGameStore } from "@/game/store";
 import { LEVEL_COUNT } from "@/game/levels";
 import { t } from "@/game/i18n";
@@ -38,9 +39,9 @@ export function ShopScreen() {
     { key: "mallet" as const, n: 1, cost: 80, label: t(lang, "shopMallet") },
   ];
   return (
-    <div className="workshop-bg flex h-full flex-col">
+    <div className="workshop-bg screen-in flex h-full flex-col">
       <TopBar title={t(lang, "shop")} onBack={() => setScreen("home")} />
-      <div className="flex flex-col gap-3 px-4 py-3">
+      <div className="stagger-in flex flex-col gap-3 px-4 py-3">
         {items.map((it) => (
           <div key={it.key} className="panel-wood flex items-center justify-between rounded-[22px] px-4 py-3 text-[var(--color-ink)]">
             <div>
@@ -54,7 +55,7 @@ export function ShopScreen() {
               onClick={() => {
                 sfxUi();
                 const ok = buy(it.cost, () => addBooster(it.key, it.n));
-                setToast(ok ? null : t(lang, "notEnough"));
+                setToast(ok ? t(lang, "buyOk") : t(lang, "notEnough"));
               }}
             >
               {t(lang, "buy")}
@@ -100,7 +101,7 @@ export function ClosetScreen() {
   };
 
   return (
-    <div className="workshop-bg flex h-full flex-col">
+    <div className="workshop-bg screen-in flex h-full flex-col">
       <TopBar title={t(lang, "closet")} onBack={() => setScreen("home")} />
       <div className="px-4 py-3">
         <h2 className="mb-2 font-extrabold text-[var(--color-cream)]">{t(lang, "boards")}</h2>
@@ -156,7 +157,7 @@ function SkinCard({
   lang: "ja" | "en";
 }) {
   return (
-    <button type="button" onClick={onClick} className="panel-wood flex flex-col items-center gap-2 rounded-[18px] p-3 text-[var(--color-ink)]">
+    <button type="button" onClick={onClick} className="panel-wood flex flex-col items-center gap-2 rounded-[18px] p-3 text-[var(--color-ink)] transition-transform duration-150 ease-out active:scale-[0.96]">
       <span className="block h-10 w-full rounded-xl border border-[#8a6434]" style={{ background: swatch }} />
       <span className="text-xs font-extrabold">{title}</span>
       <span className="text-[11px] font-bold">
@@ -169,6 +170,8 @@ function SkinCard({
 export function RankScreen() {
   const lang = useGameStore((s) => s.lang);
   const setScreen = useGameStore((s) => s.setScreen);
+  const playLevel = useGameStore((s) => s.playLevel);
+  const maxUnlocked = useGameStore((s) => s.maxUnlocked);
   const bestTime = useGameStore((s) => s.bestTime);
   const stars = useGameStore((s) => s.stars);
   const rows = Object.keys(bestTime)
@@ -181,11 +184,24 @@ export function RankScreen() {
     .slice(0, 12);
 
   return (
-    <div className="workshop-bg flex h-full flex-col">
+    <div className="workshop-bg screen-in flex h-full flex-col">
       <TopBar title={t(lang, "rankingTitle")} onBack={() => setScreen("home")} />
       <div className="flex-1 overflow-auto px-4 py-2">
         {rows.length === 0 ? (
-          <p className="mt-10 text-center font-bold text-[var(--color-cream-dark)]">{t(lang, "noTimes")}</p>
+          <div className="empty-state text-[var(--color-cream)]">
+            <TrophyMark />
+            <p className="text-lg font-extrabold">{t(lang, "emptyRank")}</p>
+            <p className="text-sm font-bold text-[var(--color-cream-dark)]">{t(lang, "emptyRankHint")}</p>
+            <WoodButton
+              className="mt-2"
+              onClick={() => {
+                sfxUi();
+                playLevel(Math.min(maxUnlocked, LEVEL_COUNT));
+              }}
+            >
+              {t(lang, "play")}
+            </WoodButton>
+          </div>
         ) : (
           <ol className="flex flex-col gap-2">
             {rows.map((r, i) => (
@@ -224,15 +240,16 @@ export function LevelSelect() {
   const setScreen = useGameStore((s) => s.setScreen);
   const maxUnlocked = useGameStore((s) => s.maxUnlocked);
   const stars = useGameStore((s) => s.stars);
+  const debug = useGameStore((s) => s.debug);
   const playLevel = useGameStore((s) => s.playLevel);
 
   return (
-    <div className="workshop-bg flex h-full flex-col">
+    <div className="workshop-bg screen-in flex h-full flex-col">
       <TopBar title={t(lang, "levels")} onBack={() => setScreen("home")} />
-      <div className="grid grid-cols-4 gap-2 overflow-auto px-4 py-3 pb-8">
+      <div className="stagger-in grid grid-cols-4 gap-2 overflow-auto px-4 py-3 pb-8">
         {Array.from({ length: LEVEL_COUNT }, (_, i) => {
           const n = i + 1;
-          const locked = n > maxUnlocked;
+          const locked = !debug && n > maxUnlocked;
           const st = stars[String(n)] ?? 0;
           return (
             <button
@@ -277,7 +294,7 @@ export function DailyModal() {
     <ModalShell title={t(lang, "daily")} onClose={() => setDailyOpen(false)}>
       <p className="mb-3 text-center text-sm font-bold">{t(lang, "dailyDesc")}</p>
       <div className="mb-4 h-3 overflow-hidden rounded-full bg-[rgba(90,50,20,0.15)]">
-        <div className="h-full bg-[var(--color-sage)]" style={{ width: `${(dailyDone / 2) * 100}%` }} />
+        <div className="bar-fill h-full bg-[var(--color-sage)]" style={{ width: `${(dailyDone / 2) * 100}%` }} />
       </div>
       <div className="mb-4 flex items-center justify-center gap-3 font-extrabold">
         <span className="inline-flex items-center gap-1">
@@ -309,16 +326,55 @@ export function DailyModal() {
 
 export function Toast() {
   const toast = useGameStore((s) => s.toast);
+  const toastAt = useGameStore((s) => s.toastAt);
   const setToast = useGameStore((s) => s.setToast);
-  if (!toast) return null;
+  const [shown, setShown] = useState<string | null>(null);
+  const [leaving, setLeaving] = useState(false);
+
+  useEffect(() => {
+    if (!toast) {
+      setShown(null);
+      setLeaving(false);
+      return;
+    }
+    setShown(toast);
+    setLeaving(false);
+    const hide = window.setTimeout(() => setLeaving(true), 2000);
+    const gone = window.setTimeout(() => {
+      setToast(null);
+      setShown(null);
+      setLeaving(false);
+    }, 2180);
+    return () => {
+      window.clearTimeout(hide);
+      window.clearTimeout(gone);
+    };
+  }, [toast, toastAt, setToast]);
+
+  if (!shown) return null;
   return (
     <button
       type="button"
-      onClick={() => setToast(null)}
-      className="absolute bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full bg-[#3a2a1c] px-4 py-2 text-sm font-bold text-[var(--color-cream)] shadow-lg"
+      onClick={() => {
+        setToast(null);
+        setShown(null);
+      }}
+      className={`absolute bottom-24 left-1/2 z-50 rounded-full bg-[#3a2a1c] px-4 py-2 text-sm font-bold text-[var(--color-cream)] shadow-lg ${leaving ? "toast-out" : "toast-in"}`}
     >
-      {toast}
+      {shown}
     </button>
+  );
+}
+
+function TrophyMark() {
+  return (
+    <svg width="56" height="56" viewBox="0 0 64 64" aria-hidden>
+      <rect x="20" y="8" width="24" height="28" rx="6" fill="#E8C35A" stroke="#B07A20" strokeWidth="3" />
+      <path d="M20 14h-8c0 10 6 16 14 16" fill="none" stroke="#C9A66B" strokeWidth="3" />
+      <path d="M44 14h8c0 10-6 16-14 16" fill="none" stroke="#C9A66B" strokeWidth="3" />
+      <rect x="26" y="36" width="12" height="8" fill="#C9A66B" stroke="#8E6B38" strokeWidth="2" />
+      <rect x="18" y="46" width="28" height="8" rx="3" fill="#C9A66B" stroke="#8E6B38" strokeWidth="2" />
+    </svg>
   );
 }
 

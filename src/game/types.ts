@@ -15,6 +15,9 @@ export type LevelDef = {
   planks: PlankDef[];
   /** plank holes that start without a screw */
   open?: [number, number][];
+  /** grid cells that are not holes */
+  blank?: [number, number][];
+  title?: string;
 };
 
 export type ScreenId = "home" | "play" | "shop" | "closet" | "rank" | "levels";
@@ -42,6 +45,7 @@ export type SaveState = {
   sfx: boolean;
   music: boolean;
   shake: boolean;
+  debug: boolean;
   boardSkin: BoardSkin;
   screwSkin: ScrewSkin;
   ownedSkins: string[];
@@ -65,6 +69,7 @@ export const DEFAULT_SAVE: SaveState = {
   sfx: true,
   music: true,
   shake: true,
+  debug: false,
   boardSkin: "oak",
   screwSkin: "steel",
   ownedSkins: ["oak", "steel"],

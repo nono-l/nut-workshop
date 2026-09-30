@@ -65,8 +65,10 @@ type GameStore = SaveState & {
   screen: ScreenId;
   playingLevel: number;
   toast: string | null;
+  toastAt: number;
   settingsOpen: boolean;
   dailyOpen: boolean;
+  ready: boolean;
   hydrate: () => void;
   setScreen: (s: ScreenId) => void;
   playLevel: (n: number) => void;
@@ -75,7 +77,7 @@ type GameStore = SaveState & {
   addBooster: (k: keyof Boosters, n: number) => void;
   buy: (cost: number, apply: () => void) => boolean;
   setLang: (l: Lang) => void;
-  toggle: (k: "sfx" | "music" | "shake") => void;
+  toggle: (k: "sfx" | "music" | "shake" | "debug") => void;
   equipBoard: (s: BoardSkin) => void;
   equipScrew: (s: ScrewSkin) => void;
   ownSkin: (id: string, cost: number) => boolean;
@@ -104,6 +106,7 @@ export const useGameStore = create<GameStore>((set, get) => {
       sfx: s.sfx,
       music: s.music,
       shake: s.shake,
+      debug: s.debug,
       boardSkin: s.boardSkin,
       screwSkin: s.screwSkin,
       ownedSkins: s.ownedSkins,
@@ -119,14 +122,20 @@ export const useGameStore = create<GameStore>((set, get) => {
     screen: "home",
     playingLevel: 1,
     toast: null,
+    toastAt: 0,
     settingsOpen: false,
     dailyOpen: false,
+    ready: false,
     hydrate: () => {
-      if (typeof window === "undefined") return;
+      if (typeof window === "undefined") {
+        set({ ready: true });
+        return;
+      }
       const loaded = loadSave();
       set({
         ...loaded,
         playingLevel: Math.min(loaded.maxUnlocked, LEVEL_COUNT),
+        ready: true,
       });
     },
     setScreen: (screen) => set({ screen }),
@@ -193,11 +202,13 @@ export const useGameStore = create<GameStore>((set, get) => {
         screen: "home",
         playingLevel: 1,
         toast: null,
+        toastAt: 0,
         settingsOpen: false,
         dailyOpen: false,
+        ready: true,
       });
     },
-    setToast: (toast) => set({ toast }),
+    setToast: (toast) => set({ toast, toastAt: Date.now() }),
     setSettingsOpen: (settingsOpen) => set({ settingsOpen }),
     setDailyOpen: (dailyOpen) => set({ dailyOpen }),
   };

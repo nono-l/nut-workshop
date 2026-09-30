@@ -1,0 +1,19 @@
+# ステージ 03 — 十字（ネジ共有）
+# holes は [列, 行]。z が大きいほど手前。
+# color は oak / green / honey / cedar / sage。
+# open は最初からネジがない穴（省略可）。
+id = 3
+title = "十字（ネジ共有）"
+cols = 4
+rows = 4
+time = 80
+
+[[planks]]
+color = "oak"
+z = 1
+holes = [[0, 2], [1, 2], [2, 2]]
+
+[[planks]]
+color = "green"
+z = 2
+holes = [[1, 1], [1, 2], [1, 3]]

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Pause, RotateCcw, Hammer, Undo2, X, Volume2, VolumeX, Languages } from "lucide-react";
+import { Pause, RotateCcw, Hammer, Undo2, X, Volume2, VolumeX, Languages, Bug } from "lucide-react";
 import { t, type I18nKey } from "@/game/i18n";
 import { useGameStore } from "@/game/store";
 
@@ -74,6 +74,7 @@ export function ModalShell({
   onClose?: () => void;
   title?: string;
 }) {
+  const lang = useGameStore((s) => s.lang);
   return (
     <div className="absolute inset-0 z-40 flex items-center justify-center bg-[rgba(16,18,26,0.55)] px-5">
       <div className="panel-wood modal-in relative w-full max-w-[340px] rounded-[28px] p-5 text-[var(--color-ink)]">
@@ -81,8 +82,8 @@ export function ModalShell({
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-3 right-3 grid size-9 place-items-center rounded-full bg-[rgba(90,50,20,0.12)]"
-            aria-label="close"
+            className="absolute top-3 right-3 grid size-11 place-items-center rounded-full bg-[rgba(90,50,20,0.12)] transition-transform duration-150 ease-out active:scale-[0.96]"
+            aria-label={t(lang, "close")}
           >
             <X className="size-5" />
           </button>
@@ -99,6 +100,7 @@ export function SettingsModal() {
   const sfx = useGameStore((s) => s.sfx);
   const music = useGameStore((s) => s.music);
   const shake = useGameStore((s) => s.shake);
+  const debug = useGameStore((s) => s.debug);
   const toggle = useGameStore((s) => s.toggle);
   const setLang = useGameStore((s) => s.setLang);
   const reset = useGameStore((s) => s.reset);
@@ -118,6 +120,10 @@ export function SettingsModal() {
         </Row>
         <Row label={tt("shake")} onClick={() => toggle("shake")}>
           <span>{shake ? tt("on") : tt("off")}</span>
+        </Row>
+        <Row label={tt("debug")} onClick={() => toggle("debug")}>
+          <Bug className="size-5" />
+          <span>{debug ? tt("on") : tt("off")}</span>
         </Row>
         <Row label={tt("lang")} onClick={() => setLang(lang === "ja" ? "en" : "ja")}>
           <Languages className="size-5" />

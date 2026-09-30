@@ -1,0 +1,29 @@
+# ステージ 15 — 放射
+# holes は [列, 行]。z が大きいほど手前。
+# color は oak / green / honey / cedar / sage。
+# open は最初からネジがない穴（省略可）。
+id = 15
+title = "放射"
+cols = 5
+rows = 5
+time = 60
+
+[[planks]]
+color = "oak"
+z = 1
+holes = [[0, 2], [1, 2], [2, 2], [3, 2], [4, 2]]
+
+[[planks]]
+color = "green"
+z = 2
+holes = [[2, 0], [2, 1], [2, 2], [2, 3], [2, 4]]
+
+[[planks]]
+color = "honey"
+z = 3
+holes = [[0, 0], [1, 1], [2, 2]]
+
+[[planks]]
+color = "cedar"
+z = 3
+holes = [[4, 0], [3, 1], [2, 2]]
